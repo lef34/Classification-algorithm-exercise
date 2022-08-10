@@ -1,0 +1,42 @@
+dataA2
+dataA2=dataA2%>%slice(sample(1:n()))
+dataA2
+TrainIndex=createDataPartition(y=dataA2$type,p=0.7,list=FALSE)
+tr=dataA2[TrainIndex,]
+test=dataA2[-TrainIndex,]
+
+
+knn1=knn(train = tr[,1:3],test = test[,1:3],,cl=tr[,3],k=3)
+table(test[,3],knn1)
+
+
+dataA2sample=sort(sample(nrow(dataA2),nrow(dataA2)*.7))
+train=dataA2[dataA2sample,]
+test=dataA2[-dataA2sample,]
+
+model=glm(type~.,family=binomial(link='logit'),data=dataA2)
+summary(model)
+
+#logit(type)=2.9091 + 0.6220(fuel) + (-0.2137)(repair) + (-0.57220)(capital)
+confint(model)
+exp(cbind(OR=coef(model),confint(model)))
+
+
+
+#prediction
+
+head(train)
+
+train$type=predict(model,newdata = train,type = "response")
+train
+
+
+train=cbind(train,predict(model,newdata = train,type = "link",se=TRUE))
+PredictedProb=plogis(train$fit)
+
+PredResults=ifelse(train$type>0.6264,"gasoline","diesel")
+table(train$type,PredResults)
+
+PredResults=factor(PredResults,levels = c("diesel","gasoline"))
+train$type=factor(train$type,levels = c("diesel","gasoline"))
+confusionMatrix(PredResults,train$type)
